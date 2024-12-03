@@ -57,5 +57,36 @@ namespace TaskManagementSystemRepository
 
             return existingTask;
         }
+
+        public async Task<(IEnumerable<TaskDto>, int)> GetAllTasksAsync(int page, int pageSize)
+        {
+            var query = _dbContext.Tasks.AsQueryable();
+
+            var totalItems = await query.CountAsync();
+            var tasks = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+            return (tasks, totalItems);
+        }
+
+        public async Task<(IEnumerable<TaskDto>, int)> SearchTasksAsync(string description, int page, int pageSize)
+        {
+            var query = _dbContext.Tasks.AsQueryable();
+
+            if (!string.IsNullOrEmpty(description))
+            {
+                query = query.Where(t => t.Description.Contains(description));
+            }
+
+            var totalItems = await query.CountAsync();
+            var tasks = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+            return (tasks, totalItems);
+        }
     }
 }

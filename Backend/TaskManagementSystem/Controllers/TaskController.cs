@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using TaskManagementSystemData.Entities;
+using TaskManagementSystemService;
 using TaskManagementSystemService.Interfaces;
 
 namespace TaskManagementSystem.Controllers
@@ -58,5 +60,35 @@ namespace TaskManagementSystem.Controllers
 
             return true; 
         }
+
+        // GET /api/tasks/search?description=meeting&page=1&pageSize=5
+        [HttpGet("search")]
+        public async Task<ActionResult> SearchTasks([FromQuery] string description, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        {
+            var (tasks, totalItems) = await _tasksService.SearchTasksAsync(description, page, pageSize);
+            return Ok(new
+            {
+                Tasks = tasks,
+                TotalItems = totalItems,
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling((double)totalItems / pageSize)
+            });
+        }
+
+        // GET: /api/Tasks?page=2&pageSize=5
+        [HttpGet]
+        public async Task<ActionResult> GetTasks([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        {
+            var (tasks, totalItems) = await _tasksService.GetAllTasksAsync(page, pageSize);
+            return Ok(new
+            {
+                Tasks = tasks,
+                TotalItems = totalItems,
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling((double)totalItems / pageSize)
+            });
+        }  
     }
 }

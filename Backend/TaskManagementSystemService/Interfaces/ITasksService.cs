@@ -14,5 +14,7 @@ namespace TaskManagementSystemService.Interfaces
         Task<TaskDto> CreateTask(TaskDto task);
         Task<TaskDto> UpdateTask(TaskDto task);
         Task<bool> DeleteTask(int taskId);
+        Task<(IEnumerable<TaskDto>, int)> SearchTasksAsync(string description, int page, int pageSize);
+        Task<(IEnumerable<TaskDto>, int)> GetAllTasksAsync(int page, int pageSize);
     }
 }
