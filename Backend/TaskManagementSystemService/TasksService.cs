@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -68,6 +69,21 @@ namespace TaskManagementSystemService
             {
                 throw ex;
             }
+        }
+
+        public async Task<(IEnumerable<TaskDto>, int)> GetAllTasksAsync(int page, int pageSize)
+        {
+            var result = await _tasksRepository.GetAllTasksAsync(page, pageSize);
+                        
+            return result;
+        }
+
+
+        public async Task<(IEnumerable<TaskDto>, int)> SearchTasksAsync(string description, int page, int pageSize)
+        {
+            var result = await _tasksRepository.SearchTasksAsync(description, page, pageSize);
+
+            return result;
         }
     }
 }
