@@ -1,32 +1,40 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTasks } from "../context/TaskContext";
 import { TaskModal } from "./TaskModal";
 import { useNavigate } from "react-router-dom";
 
 export function TaskList() {
-    const { tasks, deleteTask } = useTasks();
+    const { tasks, fetchTasks, page, totalPages, totalItems, deleteTask } = useTasks();
     const [showModal, setShowModal] = useState(false);
     const [taskToEdit, setTaskToEdit] = useState(null);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [tasksPerPage] = useState(5);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
     const navigate = useNavigate();
 
-    const filteredTasks = tasks.filter(task =>
-        (task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            task.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
-        (statusFilter === "" || task.status === statusFilter)
-    );
+    useEffect(() => {
+        fetchTasks(page);
+    }, [page, fetchTasks]);
 
-    const indexOfLastTask = currentPage * tasksPerPage;
-    const indexOfFirstTask = indexOfLastTask - tasksPerPage;
-    const currentTasks = filteredTasks.slice(indexOfFirstTask, indexOfLastTask);
-    const totalPages = Math.ceil(filteredTasks.length / tasksPerPage);
+    const filteredTasks = tasks.filter((task) => {
+        const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) || task.description.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesStatus = statusFilter ? task.status === statusFilter : true;
+        return matchesSearch && matchesStatus;
+    });
 
-    const handleEditClick = (task) => {
-        setTaskToEdit(task);
-        setShowModal(true);
+    const handleSearch = (event) => {
+        setSearchTerm(event.target.value);
+    };
+
+    const handleDelete = async (id) => {
+        await deleteTask(id);
+    };
+
+    const handleStatusChange = (event) => {
+        setStatusFilter(event.target.value);
+    };
+
+    const handlePageChange = (pageNumber) => {
+        fetchTasks(pageNumber);
     };
 
     const handleAddClick = () => {
@@ -34,23 +42,14 @@ export function TaskList() {
         setShowModal(true);
     };
 
+    const handleEditClick = (task) => {
+        setTaskToEdit(task);
+        setShowModal(true);
+    };
+
     const handleCloseModal = () => {
         setShowModal(false);
         setTaskToEdit(null);
-    };
-
-    const handleSearch = (event) => {
-        setSearchTerm(event.target.value);
-        setCurrentPage(1);
-    };
-
-    const handleStatusChange = (event) => {
-        setStatusFilter(event.target.value);
-        setCurrentPage(1);
-    };
-
-    const handlePageChange = (page) => {
-        setCurrentPage(page);
     };
 
     const handleLogout = () => {
@@ -61,7 +60,7 @@ export function TaskList() {
     return (
         <div className="container">
             <div className="d-flex justify-content-between align-items-center mb-4">
-                <h1 className="text-center">Tasks Table</h1>
+                <h1>Tasks Table</h1>
                 <button className="btn btn-danger" onClick={handleLogout}>
                     Logout
                 </button>
@@ -94,30 +93,22 @@ export function TaskList() {
                 <table className="table table-striped">
                     <thead>
                         <tr>
-                            <th scope="col">#</th>
-                            <th scope="col">Title</th>
-                            <th scope="col">Description</th>
-                            <th scope="col">Status</th>
-                            <th scope="col">Actions</th>
+                            <th>#</th>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {currentTasks.length === 0 ? (
-                            <tr>
-                                <td colSpan="5" className="text-center">
-                                    No tasks available
-                                </td>
-                            </tr>
-                        ) : (
-                            currentTasks.map((task, index) => (
+                        {filteredTasks?.length > 0 ? (
+                            filteredTasks.map((task, index) => (
                                 <tr key={task.id}>
-                                    <th scope="row">{indexOfFirstTask + index + 1}</th>
+                                    <th>{(page - 1) * 5 + index + 1}</th>
                                     <td>{task.title}</td>
                                     <td>{task.description}</td>
                                     <td>
-                                        <span className={`badge bg-primary`}>
-                                            {task.status}
-                                        </span>
+                                        <span className={`badge bg-primary`}>{task.status}</span>
                                     </td>
                                     <td>
                                         <button
@@ -126,15 +117,21 @@ export function TaskList() {
                                         >
                                             Edit
                                         </button>
-                                        <button
+                                        <button 
                                             className="btn btn-danger btn-sm mx-1"
-                                            onClick={() => deleteTask(task.id)}
+                                            onClick={() => handleDelete(task.id)}
                                         >
                                             Delete
                                         </button>
                                     </td>
                                 </tr>
                             ))
+                        ) : (
+                            <tr>
+                                <td colSpan="5" className="text-center">
+                                    No tasks available
+                                </td>
+                            </tr>
                         )}
                     </tbody>
                 </table>
@@ -144,12 +141,16 @@ export function TaskList() {
                 {Array.from({ length: totalPages }, (_, index) => (
                     <button
                         key={index + 1}
-                        className={`btn mx-1 ${currentPage === index + 1 ? "btn-primary" : "btn-outline-primary"}`}
+                        className={`btn mx-1 ${page === index + 1 ? "btn-primary" : "btn-outline-primary"}`}
                         onClick={() => handlePageChange(index + 1)}
                     >
                         {index + 1}
                     </button>
                 ))}
+            </div>
+
+            <div className="text-center mt-3">
+                Total Tasks: {totalItems}
             </div>
 
             {showModal && <TaskModal task={taskToEdit} onClose={handleCloseModal} />}

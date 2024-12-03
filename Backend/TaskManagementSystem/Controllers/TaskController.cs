@@ -77,7 +77,7 @@ namespace TaskManagementSystem.Controllers
         }
 
         // GET: /api/Tasks?page=2&pageSize=5
-        [HttpGet]
+        [HttpGet("GetTasks")]
         public async Task<ActionResult> GetTasks([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var (tasks, totalItems) = await _tasksService.GetAllTasksAsync(page, pageSize);
