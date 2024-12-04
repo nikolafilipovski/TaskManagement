@@ -5,21 +5,39 @@ services:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: mssql-container
     ports:
-      - "1433:1433"
+      - "1433:1433" # Expose MSSQL default port
     environment:
-      ACCEPT_EULA: "Y"
-      SA_PASSWORD: "YourStrong!Password"
+      ACCEPT_EULA: "Y"                # Accept the license agreement
+      SA_PASSWORD: "YourStrong!Password" # Strong password for the 'sa' user
     volumes:
-      - mssql-data:/var/opt/mssql
+      - mssql-data:/var/opt/mssql     # Persist database data
 
   backend:
     build:
       context: ./backend
+      dockerfile: Dockerfile
     container_name: backend-container
     ports:
-      - "5000:44334"
-    depends_on:
-      - mssql
+      - "5000:44334" # Expose backend API port
     environment:
-      ConnectionStrings__DefaultConnection: "Server
-docker-compose.yml
+      - ConnectionStrings__DefaultConnection=Server=mssql-container,1433;Database=TaskManagementDb;User Id=sa;Password=YourStrong!Password;
+    depends_on:
+      - mssql # Ensures MSSQL starts before the backend
+    volumes:
+      - ./backend:/app # Mount local backend code for development
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend-container
+    ports:
+      - "3000:80" # Map Nginx frontend port to host
+    depends_on:
+      - backend # Ensures backend starts before the frontend
+    volumes:
+      - ./frontend:/app # Mount local frontend code for development
+
+volumes:
+  mssql-data:
+    driver: local
