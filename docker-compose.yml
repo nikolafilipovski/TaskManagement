@@ -1,0 +1,25 @@
+version: '3.9'
+
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql-container
+    ports:
+      - "1433:1433"
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "YourStrong!Password"
+    volumes:
+      - mssql-data:/var/opt/mssql
+
+  backend:
+    build:
+      context: ./backend
+    container_name: backend-container
+    ports:
+      - "5000:44334"
+    depends_on:
+      - mssql
+    environment:
+      ConnectionStrings__DefaultConnection: "Server
+docker-compose.yml
